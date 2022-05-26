@@ -1,40 +1,181 @@
 <!doctype html>
 <html>
-	<head>
-		<meta charset="utf-8">
-		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
-		<title>reveal.js</title>
+    <title>reveal.js</title>
 
-		<link rel="stylesheet" href="dist/reset.css">
-		<link rel="stylesheet" href="dist/reveal.css">
-		<link rel="stylesheet" href="dist/theme/black.css">
+    <link rel="stylesheet" href="dist/reset.css">
+    <link rel="stylesheet" href="dist/reveal.css">
+    <link rel="stylesheet" href="dist/theme/black.css">
 
-		<!-- Theme used for syntax highlighted code -->
-		<link rel="stylesheet" href="plugin/highlight/monokai.css">
-	</head>
-	<body>
-		<div class="reveal">
-			<div class="slides">
-				<section>Slide 1</section>
-				<section>Slide 2</section>
-			</div>
-		</div>
+    <!-- Theme used for syntax highlighted code -->
+    <link rel="stylesheet" href="plugin/highlight/monokai.css">
+</head>
+<body>
+<div class="reveal">
+    <div class="slides">
+        <section data-markdown>
+				  <textarea data-template>
+					# ORM
+					Object-Relationship Mapping
 
-		<script src="dist/reveal.js"></script>
-		<script src="plugin/notes/notes.js"></script>
-		<script src="plugin/markdown/markdown.js"></script>
-		<script src="plugin/highlight/highlight.js"></script>
-		<script>
-			// More info about initialization & config:
-			// - https://revealjs.com/initialization/
-			// - https://revealjs.com/config/
-			Reveal.initialize({
-				hash: true,
+					  🇫🇷 Mapping objet-relationel
+				  </textarea>
+        </section>
 
-				// Learn about plugins: https://revealjs.com/plugins/
-				plugins: [ RevealMarkdown, RevealHighlight, RevealNotes ]
-			});
-		</script>
-	</body>
+		<section data-markdown>
+			  <textarea data-template>
+				  ## A quoi ça sert ?
+				> " Manipuler une base de donnée relationelle en utilisant la programmation orientée objet "
+			  </textarea>
+		</section>
+
+		<section data-markdown>
+			  <textarea data-template>
+
+				```
+				class Student(db.Model):
+					id = db.Column(db.Integer, primary_key=True)
+					firstname = db.Column(db.String(80), unique=True, nullable=False)
+					lastname = db.Column(db.String(80), unique=True, nullable=False)
+					email = db.Column(db.String(120), unique=True, nullable=False)
+
+				def __repr__(self):
+					return '<User %r>' % self.username
+				```
+				⬇️
+				```
+				mysql> desc student;
+				+-----------+--------------+------+-----+---------+----------------+
+				| Field     | Type         | Null | Key | Default | Extra          |
+				+-----------+--------------+------+-----+---------+----------------+
+				| id        | int          | NO   | PRI | NULL    | auto_increment |
+				| firstname | varchar(80)  | NO   | UNI | NULL    |                |
+				| lastname  | varchar(80)  | NO   | UNI | NULL    |                |
+				| email     | varchar(120) | NO   | UNI | NULL    |                |
+				+-----------+--------------+------+-----+---------+----------------+
+				4 rows in set (0.00 sec)
+
+				```
+			  </textarea>
+        </section>
+
+		<section data-markdown>
+
+			<textarea data-template>
+				  ### Requêter des éléments
+				```
+				SELECT * FROM students;
+				```
+
+				```python
+				@app.route("/students")
+				def get_students():
+					students = Student.query.all()
+					return jsonify([student.to_dict() for student in students])
+				```
+
+				  		  ### Créer des éléments
+
+				```
+				INSERT INTO students(lastname, firstname, email) VALUES (?,?,?)
+				```
+
+				```python
+				@app.route("/students/add", methods=['POST'])
+				def add_student():
+					student = Student(lastname=request.json['lastname'],firstname=request.json['firstname'],email=request.json['email'])
+					db.session.add(student)
+					db.session.commit()
+					return student.to_dict()
+				```
+			  </textarea>
+		</section>
+
+        <section data-markdown>
+				  <textarea data-template>
+					  ## 👍 Avantages
+					  - DRY : Do not repeat yourself.
+					  - Abstraction du système de base de donnée.
+					  - Pas besoin d'écrire de maitriser le SQL, uniquement notre de programmation favori.
+					  - Gestion des transactions et autres "mécaniques".
+				  </textarea>
+        </section>
+
+        <section data-markdown>
+				  <textarea data-template>
+					  ## ❌ Limites
+					  - Performance des requêtes complexes
+					  - ⚠️ Pitfalls :
+
+					  ```php
+					  <?php
+						$companies = getAllCompanies();
+						$totalValue = 0;
+						foreach ($companies as $company) {
+							$orders = $company->getOrders();
+							foreach ($orders as $order) {
+								$totalValue += (float) $order->getValue();
+							}
+
+							echo "This company made us ". $totalValue ." €
+						}
+					  ?>
+					  ```
+				  </textarea>
+        </section>
+
+        <section data-markdown>
+				  <textarea data-template>
+					## Principaux ORMS
+
+					-  Java: [Hibernate](https://en.wikipedia.org/wiki/Hibernate_(Java)).
+					-  PHP: [Doctrine](https://en.wikipedia.org/wiki/Doctrine_(PHP))
+					-  Python: [SQLAlchemy](https://en.wikipedia.org/wiki/SQLAlchemy)
+					-  C#: [Entity Framework](https://en.wikipedia.org/wiki/Entity_Framework)
+					-  NodeJS : [Sequelize](https://sequelize.org)
+				  </textarea>
+        </section>
+
+        <section data-markdown>
+				  <textarea data-template>
+					  ## Utiliser les migrations
+					  > " Versionner et faire évoluer le modèle de données "
+
+					```python
+				    # migrations/6f0aa2f7dbde_add_smoker_colum.py
+					revision = '6f0aa2f7dbde'
+					down_revision = '9ff3a8d6555a'
+					branch_labels = None
+					depends_on = None
+
+					def upgrade():
+						op.add_column('student', sa.Column('smoker', sa.Boolean(), nullable=False))
+
+					def downgrade():
+						op.drop_column('student', 'smoker')
+					```
+				  </textarea>
+        </section>
+    </div>
+</div>
+
+<script src="dist/reveal.js"></script>
+<script src="plugin/notes/notes.js"></script>
+<script src="plugin/markdown/markdown.js"></script>
+<script src="plugin/highlight/highlight.js"></script>
+<script>
+    // More info about initialization & config:
+    // - https://revealjs.com/initialization/
+    // - https://revealjs.com/config/
+    Reveal.initialize({
+        hash: true,
+
+        // Learn about plugins: https://revealjs.com/plugins/
+        plugins: [RevealMarkdown, RevealHighlight, RevealNotes]
+    });
+</script>
+</body>
 </html>
